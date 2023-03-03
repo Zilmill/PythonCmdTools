@@ -1,5 +1,6 @@
 import typer
 import os
+import re
 
 app = typer.Typer()
 
@@ -14,6 +15,19 @@ class WalkCallback(object):
     def handle(self, path):
         newpath = getFileNewFilePath(path, self.fromname, self.toname)  
         renamefile(path, newpath)
+
+# 不要参数自动生成名称
+def autoRenameFile(filepath: str):
+    folder = os.path.dirname(filepath)
+    filename = os.path.split(filepath)[1]
+    (_, ext) = os.path.splitext(filename)
+    arr = re.split('\.|\[|\]|\/|\s|\W', filename)
+    for i in range(len(arr)):
+        print("[" + str(i) + "]: " + arr[i])
+    index = input("输入数字选择一个想要的：")
+    newpath = os.path.join(folder, arr[int(index)] + ext)
+    print(newpath) 
+    renamefile(filepath, newpath)
 
 # 获取路径的新名称
 def getFileNewFilePath(path: str, fromname: str, to: str = ""):
@@ -49,20 +63,27 @@ def renamefile(oldpath: str, newpath: str):
 
 # 更改一个文件夹内所有文件的名称
 @app.command(help="【批量】更改一个文件夹内所有文件的名称")
-def rm(folder: str, fromname: str, toname: str = ""):
+def rm(folder: str, fromname: str, toname: str):
     rt = WalkCallback(fromname, toname)
     walk(folder, ".mp4", rt.handle)
 
 # 第一种，更换名称，单个更改
 @app.command(help="更换名称，单个更改")
-def rs(filepath: str, fromname: str, toname: str = ""):
+def rs(filepath: str, fromname: str, toname: str):
     newpath = getFileNewFilePath(filepath, fromname, toname)
     renamefile(filepath, newpath)
 
-# 在名称的前后加上指定字符串
+# 批量重命名电视剧的每一集名称，
 @app.command(help="批量重命名电视剧的每一集名称，")
-def ad(filepath: str):
+def shows(filepath: str):
+    # 第一步 把除数字的都删掉
     print(filepath)
+
+# 自动处理电影名称
+@app.command(name="a", help="自动处理电影名称")
+def movies(filepath: str):
+    walk(filepath, ".mp4", autoRenameFile)
+    walk(filepath, ".mkv", autoRenameFile)
 
 if __name__ == "__main__":
     app()
