@@ -31,7 +31,7 @@ def autoRenameFile(filepath: str):
     indexes = index.split(",")
     n = ""
     for a in indexes:
-        n += arr[int(a)]
+        n += arr[int(a)] + " "
 
     newpath = os.path.join(folder, n + ext)
     print(newpath) 
