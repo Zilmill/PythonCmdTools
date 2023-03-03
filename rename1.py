@@ -21,11 +21,19 @@ def autoRenameFile(filepath: str):
     folder = os.path.dirname(filepath)
     filename = os.path.split(filepath)[1]
     (_, ext) = os.path.splitext(filename)
-    arr = re.split('\.|\[|\]|\/|\s|\W', filename)
+    arr = re.split('\.|\[|\]|\/|\s|【|】', filename)
     for i in range(len(arr)):
         print("[" + str(i) + "]: " + arr[i])
-    index = input("输入数字选择一个想要的：")
-    newpath = os.path.join(folder, arr[int(index)] + ext)
+    index = input("输入数字选择一个想要的,多个用,号隔开,没有想要的直接enter：")
+
+    if len(index) == 0:
+        return
+    indexes = index.split(",")
+    n = ""
+    for a in indexes:
+        n += arr[int(a)]
+
+    newpath = os.path.join(folder, n + ext)
     print(newpath) 
     renamefile(filepath, newpath)
 
@@ -84,6 +92,7 @@ def shows(filepath: str):
 def movies(filepath: str):
     walk(filepath, ".mp4", autoRenameFile)
     walk(filepath, ".mkv", autoRenameFile)
+    walk(filepath, ".rmvb", autoRenameFile)
 
 if __name__ == "__main__":
     app()
