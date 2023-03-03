@@ -42,10 +42,15 @@ def getFileNewFilePath(path: str, fromname: str, to: str = ""):
     folder = os.path.dirname(path)
     (_, file) = os.path.split(path)
     (file, ext) = os.path.splitext(file)
-    froms = fromname.split(",")
-    for item in froms:
-        file = file.replace(item, to)
-    newname = file.strip() + ext
+    newname = ""
+    if len(fromname) == 0:
+        newname = to + file.strip() + ext
+    else:
+        froms = fromname.split(",")
+        for item in froms:
+            file = file.replace(item, to)
+        newname = file.strip() + ext
+    print(newname)    
     return os.path.join(folder, newname)
 
 # 变量
@@ -81,11 +86,13 @@ def rs(filepath: str, fromname: str, toname: str):
     newpath = getFileNewFilePath(filepath, fromname, toname)
     renamefile(filepath, newpath)
 
-# 批量重命名电视剧的每一集名称，
-@app.command(help="批量重命名电视剧的每一集名称，")
-def shows(filepath: str):
-    # 第一步 把除数字的都删掉
-    print(filepath)
+# 批量给文件加上前缀
+@app.command(name="s", help="批量给文件加上前缀")
+def setLeftName(filepath: str, toname: str):
+    rt = WalkCallback("", toname)
+    walk(filepath, ".mp4", rt.handle)
+    walk(filepath, ".mkv", rt.handle)
+    walk(filepath, ".rmvb", rt.handle)
 
 # 自动处理电影名称
 @app.command(name="a", help="自动处理电影名称")
