@@ -4,18 +4,34 @@ import re
 import os
 from bs4 import BeautifulSoup
 import typer
-import time
-from selenium import webdriver
-from PIL import Image
-from io import BytesIO
+import webbrowser
+import random
+from PIL import Image,ImageDraw,ImageFont
 
 app = typer.Typer()
 
+# 添加水印的功能
+@app.command(name="w", help="添加水印的功能")
+def waterfall(name: str):
+     # 组合apps和name并创建文件夹
+    path = os.path.join(os.getcwd(), "apps/" + name + "/screenshot.png")
 
-# 不加上这个不能使用下面的，不知道为啥
-@app.command()
-def hello(name: str):
-    print(f"Hello {name}")
+    # 如果不存在提示并结束
+    if not os.path.exists(path):
+        print("没有找到", path)
+        exit()
+
+    # 获取图片的大小
+    # img = Image.open(path)
+
+    # 为图片铺满文字水印
+    # watermark = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    # draw = ImageDraw.Draw(watermark)
+    # font = ImageFont.truetype("Hiragino Sans GB.ttc", 30)
+    # # 铺满整张图片
+    # draw.text((700, 580), "喵小猪杂货铺", font=font, fill=(128, 128, 128, 128))
+    # watermark = watermark.rotate(45, expand=1)
+    # watermark.save(path)
 
 # 搜索mac软件并生成长图
 @app.command(name="s", help="搜索mac软件并生成长图")
@@ -28,14 +44,17 @@ def search(name: str):
         os.makedirs(path)
 
     # Send a GET request to Bing with the search query
-    response = requests.get("https://www.bing.com/search?q=" + name)
+    response = requests.get("https://www.bing.com/search?q=mac+" + name)
 
     # Parse the HTML content of the response with BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Find all the search result titles that contain "Mac App Store 上的"
     titles = soup.find_all('a')
-    mac_app_store_titles = [title for title in titles if "Mac App Store 上的" in title.text]
+    print(titles)
+    mac_app_store_titles = [title for title in titles if "Mac App Store" in title.text]
+
+    print(mac_app_store_titles)
 
     # 展示 mac_app_store_titles，并显示序号，让用户选择一个
     for i, title in enumerate(mac_app_store_titles):
@@ -103,8 +122,13 @@ def search(name: str):
         f.write("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
         f.write("    <title>Mac App Store</title>\n")
         f.write("    <link rel=\"stylesheet\" href=\"style.css\">\n")
-        # 添加图片最大百分百的样式
         f.write("    <style>\n")
+        # 背景设置为白色
+        f.write("        body {\n")
+        f.write("            background-color: white;\n")
+        f.write("            padding: 0 10px;\n")
+        f.write("        }\n")
+        # 添加图片最大百分百的样式
         f.write("        img {\n")
         f.write("            max-width: 100%;\n")
         f.write("        }\n")
@@ -123,25 +147,14 @@ def search(name: str):
         f.write("{}".format(mac_app_store_title))
         # 使用字符串格式化写入mac_app_store_description
         f.write("{}".format(mac_app_store_description))
-        # 循环ls并把图片写到index.html中
-        for file in ls:
-            f.write("<img src=\"media/" + file + "\" alt=\"\">\n")
+        # 循环ls并把其中的四张图片写到index.html中
+        for i in range(4):
+            f.write("<img src=\"{}\">\n".format("media/" + ls[i]))
         f.write("</body>\n")
         f.write("</html>\n")
 
-    # 创建Chrome浏览器对象
-    driver = webdriver.Chrome()
-
-    # 打开网页并改变窗口大小
-    driver.get("http://127.0.0.1:5500/apps/"+name+"/index.html")
-    driver.set_window_size(500, 800)  # 将窗口大小设置为 500x800
-
-    time.sleep(4)
-
-    # 截取窗口长图
-    screenshot = driver.get_screenshot_as_png()
-    screenshot = Image.open(BytesIO(screenshot))  # 将截图转换为 Image 对象
-    screenshot.save(path + "/screenshot.png")
+    # 打开网页
+    webbrowser.open("http://127.0.0.1:5500/apps/"+name+"/index.html")
 
 if __name__ == "__main__":
     app()
