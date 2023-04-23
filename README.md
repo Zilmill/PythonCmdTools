@@ -39,3 +39,6 @@ if __name__ == "__main__":
 ```
 
 ### rename1 批量修改名称等
+
+
+python searchMacApp/index.py s "" "" && python searchMacApp/index.py w "parallels-desktop"

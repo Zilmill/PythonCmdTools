@@ -5,11 +5,38 @@ import os
 from bs4 import BeautifulSoup
 import typer
 import webbrowser
-import math
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageChops, ImageOps
 from watermark import Watermarker, WatermarkerStyles
+from PIL import Image
 
 app = typer.Typer()
+
+
+def downloadwebp(out: str, link: str, ispng: int):
+    """
+    下载文件
+    """
+    print("下载：" + link)
+    # 下载图片
+    response = requests.get(link)
+    # 把文件后缀.png/.jpeg/.jpg替换成.webp
+    p = re.sub(r"\.(png|jpe?g)$", ".webp", out)
+    # 保存图片
+    with open(p, 'wb') as f:
+        f.write(response.content)
+    # webp文件转化为.jpg文件
+    # 打开WebP文件
+    with Image.open(p) as im:
+        if ispng == 1:
+            # 保存为JPEG文件
+            im.save(p.replace('.webp', '.png'))
+        else:
+            # 将图像转换为RGB格式
+            im = im.convert('RGB')
+            # 保存为JPEG文件
+            im.save(p.replace('.webp', '.jpg'))
+        
+    # 删除webp文件
+    os.remove(p)
 
 
 @app.command(name="w", help="添加水印的功能")
@@ -29,6 +56,7 @@ def waterfall(name: str):
     mark = "喵小猪杂货铺"
     out = os.path.join(os.getcwd(), "apps/" + name + "/screenshot2.png")
     Watermarker(path, mark, WatermarkerStyles.STRIPED).save(out)
+
 
 @app.command(name="s", help="搜索mac软件并生成长图, 第一个参数是名称，第二个参数是app store地址")
 def search(name: str, _url: str):
@@ -93,42 +121,25 @@ def search(name: str, _url: str):
     if not os.path.exists(mediapath):
         os.makedirs(mediapath)
 
-    # 获取软件图片
-    icon = soup.find("picture", {'class': 'we-artwork--macos-app-icon'})
-    icon_source = icon.find_all('source')[0]
-
-    srcset = icon_source['srcset']
-    # 从srcset中提取https://开头到初次.png结尾的部分
-    src = re.search(r"https://.+?\.png", srcset)[0]
-
-    print("下载：" + src + "/460x0w.webp")
-    # 下载图片
-    response = requests.get(src + "/460x0w.webp")
-    # 保存图片
-    with open(path + "/media/" + src.split('/')[-1], 'wb') as f:
-        f.write(response.content)
-
     # 如果mediapath文件夹内没有文件，否则就输出文件列表
     ls = os.listdir(mediapath)
     if not ls:
-        # 获取class类为we-screenshot-viewer__screenshots的所有图片，并下载到当前目录
+        # 获取class类为we-screenshot-viewer__screenshots 或者 we-screenshot-viewer__screenshots-list 的所有图片，并下载到当前目录
         pic = soup.find('div', {'class': 'we-screenshot-viewer__screenshots'})
+        if pic is None:
+            pic = soup.find(
+                'div', {'class': 'we-screenshot-viewer__screenshots-list'})
         mac_app_store_screenshots = pic.find_all('source')
 
         # 循环获取图片
         for screenshot in mac_app_store_screenshots:
             srcset = screenshot['srcset']
             # 从srcset中提取https://开头到初次.png结尾的部分
-            src = re.search(r"https://.+?\.png", srcset)[0]
+            src = re.search(r"https://.+?\.(png|jpe?g)", srcset)[0]
 
             # 判断是否成功获取到
             if src is not None:
-                print("下载：" + src + "/1286x0w.webp")
-                # 下载图片
-                response = requests.get(src + "/1286x0w.webp")
-                # 保存图片
-                with open(path + "/media/" + src.split('/')[-1], 'wb') as f:
-                    f.write(response.content)
+                downloadwebp(path + "/media/" + src.split('/')[-1], src + "/1286x0w.webp", 0)
 
     ls = os.listdir(mediapath)
 
@@ -169,10 +180,22 @@ def search(name: str, _url: str):
         # 使用字符串格式化写入mac_app_store_description
         f.write("{}".format(mac_app_store_description))
         # 循环ls并把其中的四张图片写到index.html中
-        for i in range(4):
+        # 取ls数组的最大值，最大不能超过4
+        for i in range(min(4, len(ls))):
+            # 判断ls[i]不为空
             f.write("<img src=\"{}\">\n".format("media/" + ls[i]))
         f.write("</body>\n")
         f.write("</html>\n")
+
+    # 获取软件图片
+    icon = soup.find("picture", {'class': 'we-artwork--macos-app-icon'})
+    icon_source = icon.find_all('source')[0]
+
+    srcset = icon_source['srcset']
+    # 从srcset中提取https://开头到初次.png结尾的部分
+    src = re.search(r"https://.+?\.png", srcset)[0]
+
+    downloadwebp(path + "/media/" + src.split('/')[-1], src + "/460x0w.webp", 1)
 
     # 打开网页
     webbrowser.open("http://127.0.0.1:5500/apps/"+name+"/index.html")
