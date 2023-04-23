@@ -34,8 +34,8 @@ def waterfall(name: str):
     # watermark.save(path)
 
 # 搜索mac软件并生成长图
-@app.command(name="s", help="搜索mac软件并生成长图")
-def search(name: str):
+@app.command(name="s", help="搜索mac软件并生成长图, 第一个参数是名称，第二个参数是app store地址")
+def search(name: str, _url: str):
     # 组合apps和name并创建文件夹
     path = os.path.join(os.getcwd(), "apps/" + name)
 
@@ -43,34 +43,37 @@ def search(name: str):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    # Send a GET request to Bing with the search query
-    response = requests.get("https://www.bing.com/search?q=mac+" + name)
+    if _url == "":
+        # Send a GET request to Bing with the search query
+        response = requests.get("https://www.bing.com/search?q=mac+" + name)
 
-    # Parse the HTML content of the response with BeautifulSoup
-    soup = BeautifulSoup(response.content, 'html.parser')
+        # Parse the HTML content of the response with BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-    # Find all the search result titles that contain "Mac App Store 上的"
-    titles = soup.find_all('a')
-    print(titles)
-    mac_app_store_titles = [title for title in titles if "Mac App Store" in title.text]
+        # Find all the search result titles that contain "Mac App Store 上的"
+        titles = soup.find_all('a')
+        print(titles)
+        mac_app_store_titles = [title for title in titles if "Mac App Store" in title.text]
 
-    print(mac_app_store_titles)
+        print(mac_app_store_titles)
 
-    # 展示 mac_app_store_titles，并显示序号，让用户选择一个
-    for i, title in enumerate(mac_app_store_titles):
-        print(i, ": ", title.text, "\n", title["href"])
+        # 展示 mac_app_store_titles，并显示序号，让用户选择一个
+        for i, title in enumerate(mac_app_store_titles):
+            print(i, ": ", title.text, "\n", title["href"])
 
-    # 如果只有一个那么直接用第0个，否则让用户选择一个
-    if len(mac_app_store_titles) == 1:
-        mac_app_store_url = mac_app_store_titles[0]["href"]
+        # 如果只有一个那么直接用第0个，否则让用户选择一个
+        if len(mac_app_store_titles) == 1:
+            mac_app_store_url = mac_app_store_titles[0]["href"]
+        else:
+            choice = int(input("请输入序号:"))
+            mac_app_store_url = mac_app_store_titles[choice]["href"]
+
+        # 选择的没有URL时结束并提示没有找到
+        if mac_app_store_url is None:
+            print("没有找到")
+            exit()
     else:
-        choice = int(input("请输入序号:"))
-        mac_app_store_url = mac_app_store_titles[choice]["href"]
-
-    # 选择的没有URL时结束并提示没有找到
-    if mac_app_store_url is None:
-        print("没有找到")
-        exit()
+        mac_app_store_url = _url       
 
     # 获取页面的内容
     response = requests.get(mac_app_store_url)
@@ -104,6 +107,7 @@ def search(name: str):
 
             # 判断是否成功获取到
             if src is not None:
+                print("下载：" + src + "/1286x0w.webp")
                 # 下载图片
                 response = requests.get(src + "/1286x0w.webp")
                 # 保存图片
