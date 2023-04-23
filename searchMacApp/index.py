@@ -5,16 +5,18 @@ import os
 from bs4 import BeautifulSoup
 import typer
 import webbrowser
-import random
-from PIL import Image, ImageDraw, ImageFont
+import math
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageChops, ImageOps
+from watermark import Watermarker, WatermarkerStyles
 
 app = typer.Typer()
-
-# 添加水印的功能
 
 
 @app.command(name="w", help="添加水印的功能")
 def waterfall(name: str):
+    """
+    添加水印的功能
+    """
     # 组合apps和name并创建文件夹
     path = os.path.join(os.getcwd(), "apps/" + name + "/screenshot.png")
 
@@ -23,23 +25,16 @@ def waterfall(name: str):
         print("没有找到", path)
         exit()
 
-    # 获取图片的大小
-    # img = Image.open(path)
-
-    # 为图片铺满文字水印
-    # watermark = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    # draw = ImageDraw.Draw(watermark)
-    # font = ImageFont.truetype("Hiragino Sans GB.ttc", 30)
-    # # 铺满整张图片
-    # draw.text((700, 580), "喵小猪杂货铺", font=font, fill=(128, 128, 128, 128))
-    # watermark = watermark.rotate(45, expand=1)
-    # watermark.save(path)
-
-# 搜索mac软件并生成长图
-
+    # 参数
+    mark = "喵小猪杂货铺"
+    out = os.path.join(os.getcwd(), "apps/" + name + "/screenshot2.png")
+    Watermarker(path, mark, WatermarkerStyles.STRIPED).save(out)
 
 @app.command(name="s", help="搜索mac软件并生成长图, 第一个参数是名称，第二个参数是app store地址")
 def search(name: str, _url: str):
+    """
+    搜索mac软件并生成长图
+    """
     # 组合apps和name并创建文件夹
     path = os.path.join(os.getcwd(), "apps/" + name)
 
