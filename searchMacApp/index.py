@@ -6,14 +6,16 @@ from bs4 import BeautifulSoup
 import typer
 import webbrowser
 import random
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 app = typer.Typer()
 
 # 添加水印的功能
+
+
 @app.command(name="w", help="添加水印的功能")
 def waterfall(name: str):
-     # 组合apps和name并创建文件夹
+    # 组合apps和name并创建文件夹
     path = os.path.join(os.getcwd(), "apps/" + name + "/screenshot.png")
 
     # 如果不存在提示并结束
@@ -34,6 +36,8 @@ def waterfall(name: str):
     # watermark.save(path)
 
 # 搜索mac软件并生成长图
+
+
 @app.command(name="s", help="搜索mac软件并生成长图, 第一个参数是名称，第二个参数是app store地址")
 def search(name: str, _url: str):
     # 组合apps和name并创建文件夹
@@ -53,7 +57,8 @@ def search(name: str, _url: str):
         # Find all the search result titles that contain "Mac App Store 上的"
         titles = soup.find_all('a')
         print(titles)
-        mac_app_store_titles = [title for title in titles if "Mac App Store" in title.text]
+        mac_app_store_titles = [
+            title for title in titles if "Mac App Store" in title.text]
 
         print(mac_app_store_titles)
 
@@ -73,7 +78,7 @@ def search(name: str, _url: str):
             print("没有找到")
             exit()
     else:
-        mac_app_store_url = _url       
+        mac_app_store_url = _url
 
     # 获取页面的内容
     response = requests.get(mac_app_store_url)
@@ -83,7 +88,8 @@ def search(name: str, _url: str):
     mac_app_store_title = soup.find('h1')
 
     # 对class类为section__description的部分
-    mac_app_store_description = soup.find('div', {'class': 'section__description'})
+    mac_app_store_description = soup.find(
+        'div', {'class': 'section__description'})
 
     # 媒体文件夹
     mediapath = path + "/media/"
@@ -92,11 +98,26 @@ def search(name: str, _url: str):
     if not os.path.exists(mediapath):
         os.makedirs(mediapath)
 
+    # 获取软件图片
+    icon = soup.find("picture", {'class': 'we-artwork--macos-app-icon'})
+    icon_source = icon.find_all('source')[0]
+
+    srcset = icon_source['srcset']
+    # 从srcset中提取https://开头到初次.png结尾的部分
+    src = re.search(r"https://.+?\.png", srcset)[0]
+
+    print("下载：" + src + "/460x0w.webp")
+    # 下载图片
+    response = requests.get(src + "/460x0w.webp")
+    # 保存图片
+    with open(path + "/media/" + src.split('/')[-1], 'wb') as f:
+        f.write(response.content)
+
     # 如果mediapath文件夹内没有文件，否则就输出文件列表
     ls = os.listdir(mediapath)
     if not ls:
         # 获取class类为we-screenshot-viewer__screenshots的所有图片，并下载到当前目录
-        pic = soup.find('div', { 'class': 'we-screenshot-viewer__screenshots' })
+        pic = soup.find('div', {'class': 'we-screenshot-viewer__screenshots'})
         mac_app_store_screenshots = pic.find_all('source')
 
         # 循环获取图片
@@ -113,7 +134,7 @@ def search(name: str, _url: str):
                 # 保存图片
                 with open(path + "/media/" + src.split('/')[-1], 'wb') as f:
                     f.write(response.content)
-    
+
     ls = os.listdir(mediapath)
 
     # mac_app_store_title 和 mac_app_store_description 部分的内容写到index.html中
@@ -123,7 +144,8 @@ def search(name: str, _url: str):
         f.write("<head>\n")
         f.write("    <meta charset=\"UTF-8\">\n")
         f.write("    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n")
-        f.write("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
+        f.write(
+            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
         f.write("    <title>Mac App Store</title>\n")
         f.write("    <link rel=\"stylesheet\" href=\"style.css\">\n")
         f.write("    <style>\n")
@@ -145,7 +167,7 @@ def search(name: str, _url: str):
         f.write("            display: none;\n")
         f.write("        }\n")
         f.write("    </style>\n")
-        f.write("</head>\n")   
+        f.write("</head>\n")
         f.write("<body>\n")
         # 写入标签
         f.write("{}".format(mac_app_store_title))
@@ -160,13 +182,6 @@ def search(name: str, _url: str):
     # 打开网页
     webbrowser.open("http://127.0.0.1:5500/apps/"+name+"/index.html")
 
+
 if __name__ == "__main__":
     app()
-
-
-    
-
-
-
-
-
